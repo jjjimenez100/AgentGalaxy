@@ -3,6 +3,7 @@ from Spaceship import Spaceship
 from random import randrange
 from Asteroid import Asteroid
 from Label import Label
+
 pygame.init()
 
 backgroundImage = pygame.transform.scale(pygame.image.load("images/stars.png"), (900, 600))
@@ -19,21 +20,33 @@ timer = pygame.time.Clock()
 spaceshipSprite = Spaceship(["images/rocket2a.png", "images/rocket2b.png"], screen.get_size(), "images/rocket1.png")
 instruction = Label("Press the arrow keys to move!", 30, (SCREEN_WIDTH//2, 30), (255,255,255))
 collisionLabel = Label("Collisions: 0", 30, (80,SCREEN_HEIGHT-30), (255,255,255))
+scoreLabel = Label("Score: 0", 30, (SCREEN_WIDTH-60, SCREEN_HEIGHT-30), (255,255,255))
 gameOverLabel = Label("GAME OVER!", 80, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2), (255,255,255))
-spriteGroup = pygame.sprite.Group(spaceshipSprite, instruction,collisionLabel)
+spriteGroup = pygame.sprite.Group(spaceshipSprite, instruction, collisionLabel, scoreLabel)
 iteration = 0
 asteroids = []
 collisions = 0
 gameOver = False
+score = 0
 
 while not gameLoop:
     timer.tick(FPS)
+    for beam in spaceshipSprite.beams:
+        if(not spriteGroup.has(beam)):
+            spriteGroup.add(beam)
+        for asteroid in asteroids:
+            if(beam.rect.colliderect(asteroid.rect)):
+                spriteGroup.remove(asteroid)
+                spriteGroup.remove(beam)
+                spaceshipSprite.beams.remove(beam)
+                asteroids.remove(asteroid)
+                score += 1
+                scoreLabel.text = "Score: " + str(score)
     for asteroid in asteroids:
         if(asteroid.rect.top > SCREEN_HEIGHT):
             spriteGroup.remove(asteroid)
             asteroids.remove(asteroid)
         if(spaceshipSprite.smallerHitBox.colliderect(asteroid)):
-            print(spaceshipSprite.rect)
             collisions += 1
             asteroids.remove(asteroid)
             asteroidRect = asteroid.rect

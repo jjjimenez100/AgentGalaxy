@@ -1,4 +1,5 @@
 from pygame.sprite import Sprite
+from Bullet import Bullet
 import pygame
 
 # +90 left
@@ -15,6 +16,7 @@ class Spaceship(Sprite):
         self.imageLeft = []
         self.imageBottom = []
 
+        self.imageNormal.append(pygame.image.load(idleImageLocation))
         for imageLocation in imageLocations:
             self.imageNormal.append(pygame.image.load(imageLocation))
         for image in self.imageNormal:
@@ -24,7 +26,7 @@ class Spaceship(Sprite):
 
         self.imagesInUse = self.imageNormal
 
-        self.idleImage = pygame.image.load(idleImageLocation)
+        #self.idleImage = pygame.image.load(idleImageLocation)
         self.imageSize = self.imageNormal[0].get_size()
         self.rect = pygame.Rect((0,0), self.imageSize)
         self.rect.centerx = self.width//2
@@ -37,10 +39,16 @@ class Spaceship(Sprite):
         self.currentFrame = 0
         self.imageCurrentIndex = 0
 
-        self.image = self.idleImage
+        self.image = self.imagesInUse[self.imageCurrentIndex]
         self.speedx = 5
         self.speedy = 5
         self.moving = False
+        self.maxInterval = 50
+        # 1 up 2 right 3 bottom 4 left
+        self.direction = 1
+        self.perFrameIncrement = 5
+        self.currentInterval = 0
+        self.beams = []
 
     def update(self):
 
@@ -49,25 +57,51 @@ class Spaceship(Sprite):
         self.moving = False
 
         keysPressed = pygame.key.get_pressed()
+        if (keysPressed[pygame.K_SPACE]):
+            if (self.currentInterval == 0):
+                newBeam = Bullet("images/laserBlue01.png", (self.width, self.height), self.direction)
+                if(self.direction == 1):
+                    newBeam.rect.x = self.smallerHitBox.centerx
+                    newBeam.rect.y = self.smallerHitBox.midtop[1] - 50
+                elif(self.direction == 2):
+                    newBeam.rect.x = self.smallerHitBox.midright[0] + 5
+                    newBeam.rect.y = self.smallerHitBox.midright[1] - 25
+                elif(self.direction == 3):
+                    newBeam.rect.x = self.smallerHitBox.midbottom[0] - 10
+                    newBeam.rect.y = self.smallerHitBox.midbottom[1] - 30
+                elif(self.direction == 4):
+                    newBeam.rect.x = self.smallerHitBox.midleft[0] - 35
+                    newBeam.rect.y = self.smallerHitBox.midleft[1] - 35
+                self.beams.append(newBeam)
+                self.currentInterval += self.perFrameIncrement
+            elif (self.currentInterval == self.maxInterval):
+                self.currentInterval = 0
+            else:
+                self.currentInterval += self.perFrameIncrement
         if(keysPressed[pygame.K_RIGHT]):
             self.dx = self.speedx
             self.moving = True
+            self.direction = 2
             self.imagesInUse = self.imageRight
         elif(keysPressed[pygame.K_LEFT]):
             self.dx = -self.speedx
             self.moving = True
+            self.direction = 4
             self.imagesInUse = self.imageLeft
         elif(keysPressed[pygame.K_UP]):
             self.dy = -self.speedy
             self.moving = True
+            self.direction = 1
             self.imagesInUse = self.imageNormal
         elif(keysPressed[pygame.K_DOWN]):
             self.dy = self.speedy
             self.moving = True
+            self.direction = 3
             self.imagesInUse = self.imageBottom
+
         if(self.moving):
             self.music.play(-1)
-            self.image = self.imagesInUse[self.imageCurrentIndex]
+            #self.image = self.imagesInUse[self.imageCurrentIndex]
             self.currentFrame += 1
             if(self.currentFrame >= self.totalFrames):
                 self.currentFrame = 0
@@ -85,6 +119,6 @@ class Spaceship(Sprite):
             else:
                 self.rect.move_ip(self.dx, self.dy)
         else:
-            self.image = self.idleImage
             self.music.stop()
+            self.image = self.imagesInUse[0]
         self.smallerHitBox.midbottom = self.rect.midbottom
